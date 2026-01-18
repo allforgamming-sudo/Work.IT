@@ -234,7 +234,6 @@ function clearFields() {
     document.getElementById('sanctionsInput').value = '';
     document.getElementById('crimesInput').value = '';
     document.getElementById('wantedInput').value = '';
-    updateDisplay();
 }
 
 // ============ Hour Calculation ============
@@ -661,10 +660,7 @@ function handleShiftDetailsSubmit(event) {
     appState.selectedDate = dateObj;
     
     // Update UI
-    updateCalendar();
-    updateStats();
-    updateShiftDisplay();
-    updateIncidents();
+    updateDisplay();
     
     // Show success message
     alert('✅ Schimb salvat cu succes!');

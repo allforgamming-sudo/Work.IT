@@ -62,8 +62,9 @@ self.addEventListener('fetch', event => {
             .then(response => {
                 // Cache successful responses
                 if (response && response.status === 200) {
+                    const responseClone = response.clone();
                     const cache = caches.open(CACHE_NAME);
-                    cache.then(c => c.put(request, response.clone()));
+                    cache.then(c => c.put(request, responseClone));
                 }
                 return response;
             })
