@@ -334,26 +334,33 @@ function updateShiftDisplay() {
     const shiftInfo = document.getElementById('shiftInfo');
     
     if (shift) {
-        const isWeekendShift = shift.weekend_hours > 0 && shift.normal_hours === 0;
-        const isHoliday = appState.holidays.has(dateStr);
+        const normalHours = shift.normal_hours || 0;
+        const weekendHours = shift.weekend_hours || 0;
+        const totalHours = shift.hours || 0;
         
         let html = `
-            <strong>${shift.start} - ${shift.end}</strong><br>
-            Total: ${shift.hours} ore<br>
-            Ore normale: ${shift.normal_hours} ore<br>
-            Ore weekend: ${shift.weekend_hours} ore
+            <strong>⏰ ${shift.start} - ${shift.end}</strong><br>
+            <strong>Total Ore:</strong> ${totalHours.toFixed(2)} ore<br>
         `;
         
+        if (normalHours > 0) {
+            html += `<strong>Ore Normale:</strong> ${normalHours.toFixed(2)} ore<br>`;
+        }
+        
+        if (weekendHours > 0) {
+            html += `<strong>Ore Weekend/Sărbătoare:</strong> ${weekendHours.toFixed(2)} ore<br>`;
+        }
+        
         if (shift.sanctions > 0 || shift.crimes > 0 || shift.wanted > 0) {
-            html += `<br><br>Evenimente:<br>`;
-            if (shift.sanctions > 0) html += `Sancțiuni: ${shift.sanctions}<br>`;
-            if (shift.crimes > 0) html += `Infracțiuni: ${shift.crimes}<br>`;
-            if (shift.wanted > 0) html += `Persoane urmărite: ${shift.wanted}<br>`;
+            html += `<br><strong>🚨 Evenimente:</strong><br>`;
+            if (shift.sanctions > 0) html += `📋 Sancțiuni: <strong>${shift.sanctions}</strong><br>`;
+            if (shift.crimes > 0) html += `⚖️ Infracțiuni: <strong>${shift.crimes}</strong><br>`;
+            if (shift.wanted > 0) html += `👤 Persoane Urmărite: <strong>${shift.wanted}</strong><br>`;
         }
         
         shiftInfo.innerHTML = html;
     } else {
-        shiftInfo.textContent = 'Nicio inregistrare de schimb';
+        shiftInfo.innerHTML = '<em style="color: #999;">Nicio înregistrare de schimb pentru această dată</em>';
     }
 }
 
@@ -608,39 +615,59 @@ function handleShiftDetailsSubmit(event) {
         hours += 24;
     }
     
-    // Save shift to appState
-    if (!appState.shifts[shiftDate]) {
-        appState.shifts[shiftDate] = [];
+    // Check if date is weekend or holiday
+    const shiftDateObj = new Date(shiftDate + 'T00:00:00');
+    const dayOfWeek = shiftDateObj.getDay();
+    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+    const isHoliday = appState.holidays.has(shiftDate);
+    
+    // Calculate normal vs weekend hours
+    let normalHours = hours;
+    let weekendHours = 0;
+    
+    if (isWeekend || isHoliday) {
+        weekendHours = hours;
+        normalHours = 0;
     }
     
-    appState.shifts[shiftDate].push({
+    // Save shift to appState as OBJECT (not array)
+    appState.shifts[shiftDate] = {
         start: startTime,
         end: endTime,
         hours: hours,
+        normal_hours: normalHours,
+        weekend_hours: weekendHours,
         sanctions: sanctions,
         crimes: crimes,
         wanted: wanted,
+        weekend_shift: isWeekend || isHoliday,
         timestamp: new Date().toISOString()
-    });
+    };
     
     // Save to localStorage
     try {
         localStorage.setItem('shiftCalendarData', JSON.stringify({
             shifts: appState.shifts
         }));
+        console.log('✅ Shift saved successfully:', appState.shifts[shiftDate]);
     } catch (e) {
-        console.error('Error saving shifts:', e);
-        alert('Eroare la salvarea datelor');
+        console.error('❌ Error saving shifts:', e);
+        alert('Eroare la salvarea datelor: ' + e.message);
         return;
     }
+    
+    // Select the date to show details
+    const dateObj = new Date(shiftDate + 'T00:00:00');
+    appState.selectedDate = dateObj;
     
     // Update UI
     updateCalendar();
     updateStats();
     updateShiftDisplay();
+    updateIncidents();
     
     // Show success message
-    alert('Schimb salvat cu succes!');
+    alert('✅ Schimb salvat cu succes!');
     
     // Close modal
     closeShiftDetailsModal();
