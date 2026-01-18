@@ -1,0 +1,22 @@
+{
+  "2026-01-01": {
+    "start": "06:00",
+    "end": "14:00",
+    "hours": 8.0,
+    "normal_hours": 0.0,
+    "weekend_hours": 8.0,
+    "sanctions": 3,
+    "crimes": 1,
+    "wanted": 2
+  },
+  "2026-01-04": {
+    "start": "22:00",
+    "end": "06:00",
+    "hours": 8.0,
+    "normal_hours": 6.0,
+    "weekend_hours": 2.0,
+    "sanctions": 1,
+    "crimes": 0,
+    "wanted": 0
+  }
+}

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Calendar de Schimburi - Tracker Ore Lucrate">
+    <meta name="theme-color" content="#1e3a8a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Shift Calendar">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="manifest" href="manifest.json">
+    <title>Calendar de Schimburi</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="app-header">
+            <h1>📅 Calendar de Schimburi</h1>
+            <p class="subtitle">Tracker Ore Lucrate</p>
+        </header>
+
+        <!-- Quick Shift Selection -->
+        <section class="preset-section">
+            <h2>Selectare Rapidă Schimb</h2>
+            <div class="shift-buttons">
+                <button class="shift-btn shift-1" onclick="quickAddShift('06:00', '14:00')">
+                    <span class="shift-title">SCHIMBUL I</span>
+                    <span class="shift-time">06:00 - 14:00</span>
+                </button>
+                <button class="shift-btn shift-2" onclick="quickAddShift('14:00', '22:00')">
+                    <span class="shift-title">SCHIMBUL II</span>
+                    <span class="shift-time">14:00 - 22:00</span>
+                </button>
+                <button class="shift-btn shift-3" onclick="quickAddShift('22:00', '06:00')">
+                    <span class="shift-title">SCHIMBUL III</span>
+                    <span class="shift-time">22:00 - 06:00</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- Main Content - Calendar and Stats -->
+        <section class="middle-section">
+            <!-- Calendar -->
+            <div class="calendar-container">
+                <h3>Selectare Data</h3>
+                <div id="calendar" class="calendar"></div>
+            </div>
+
+            <!-- Statistics -->
+            <div class="stats-container">
+                <h3>Statistici Ore Lucrate</h3>
+                <div class="stats-content">
+                    <div class="stat-item">
+                        <label>Total Ore (Luna Aceasta):</label>
+                        <span class="stat-value" id="monthlyHours">0.00 ore</span>
+                    </div>
+                    <div class="stat-item">
+                        <label>Ore Weekend (Luna Aceasta):</label>
+                        <span class="stat-value weekend" id="monthlyWeekend">0.00 ore</span>
+                    </div>
+                    <div class="stat-item">
+                        <label>Total Ore (Tot Timpul):</label>
+                        <span class="stat-value" id="totalHours">0.00 ore</span>
+                    </div>
+                    <div class="stat-item">
+                        <label>Ore Weekend (Tot Timpul):</label>
+                        <span class="stat-value weekend" id="totalWeekend">0.00 ore</span>
+                    </div>
+
+                    <hr>
+
+                    <div class="incidents-stats">
+                        <label>Evenimente (Luna Aceasta):</label>
+                        <div class="incidents-row">
+                            <span>S: <span id="monthlySanctions">0</span></span>
+                            <span>I: <span id="monthlyCrimes">0</span></span>
+                            <span>P: <span id="monthlyWanted">0</span></span>
+                        </div>
+                    </div>
+
+                    <div class="incidents-stats">
+                        <label>evenimente (Tot Timpul):</label>
+                        <div class="incidents-row">
+                            <span>S: <span id="totalSanctions">0</span></span>
+                            <span>I: <span id="totalCrimes">0</span></span>
+                            <span>P: <span id="totalWanted">0</span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Incidents -->
+            <div class="incidents-input-container">
+                <h3>Înregistrare Evenimente</h3>
+                <div class="incidents-form">
+                    <div class="incident-group">
+                        <label>Sancțiuni Constatate</label>
+                        <input type="number" id="sanctionsInput" placeholder="Număr" min="0">
+                    </div>
+                    <div class="incident-group">
+                        <label>Infracțiuni Constatate</label>
+                        <input type="number" id="crimesInput" placeholder="Număr" min="0">
+                    </div>
+                    <div class="incident-group">
+                        <label>Persoane Urmărite</label>
+                        <input type="number" id="wantedInput" placeholder="Număr" min="0">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Shift Details -->
+        <section class="detail-section">
+            <h3>Detalii Schimb</h3>
+            <div class="shift-details">
+                <div class="shift-input">
+                    <p id="selectedDate" class="date-display">Data: <strong id="dateValue">-</strong></p>
+                    <div class="time-inputs">
+                        <div>
+                            <label>Ora Inceput (HH:MM):</label>
+                            <input type="time" id="startTime" placeholder="06:00">
+                        </div>
+                        <div>
+                            <label>Ora Sfarsit (HH:MM):</label>
+                            <input type="time" id="endTime" placeholder="14:00">
+                        </div>
+                    </div>
+                    <div class="button-group">
+                        <button class="btn btn-save" onclick="saveShift()">Salvare</button>
+                        <button class="btn btn-delete" onclick="deleteShift()">Stergere</button>
+                        <button class="btn btn-clear" onclick="clearFields()">Golire</button>
+                    </div>
+                </div>
+
+                <div class="shift-display">
+                    <h4>Schimb Curent</h4>
+                    <div id="shiftInfo" class="shift-info">Nicio inregistrare de schimb</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- View All Shifts -->
+        <section class="all-shifts-section">
+            <button class="btn btn-primary" onclick="toggleAllShifts()">Vedere Toate Schimburile</button>
+            <div id="allShiftsContainer" class="all-shifts-container hidden">
+                <div id="allShiftsList" class="shifts-list"></div>
+            </div>
+        </section>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js')
+                .then(registration => console.log('Service Worker registered'))
+                .catch(error => console.log('Service Worker registration failed:', error));
+        }
+    </script>
+</body>
+</html>
