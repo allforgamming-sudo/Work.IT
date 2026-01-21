@@ -459,11 +459,12 @@ function displayAllShifts() {
         const detailsHtml = `
             <div class="shift-item-date">${date.toLocaleDateString('ro-RO', { weekday: 'short', year: 'numeric', month: '2-digit', day: '2-digit' })}</div>
             <div class="shift-item-details">
-                <div><strong>Ore:</strong> ${shift.hours} (Normal: ${shift.normal_hours} | Weekend: ${shift.weekend_hours})</div>
-                <div><strong>Schimb:</strong> ${shift.start} - ${shift.end}</div>
-                ${shift.sanctions > 0 ? `<div><strong>Sancțiuni:</strong> ${shift.sanctions}</div>` : ''}
-                ${shift.crimes > 0 ? `<div><strong>Infracțiuni:</strong> ${shift.crimes}</div>` : ''}
-                ${shift.wanted > 0 ? `<div><strong>Urmărite:</strong> ${shift.wanted}</div>` : ''}
+                <div><strong>⏰ Schimb:</strong> ${shift.start} - ${shift.end}</div>
+                <div><strong>📊 Ore:</strong> ${shift.hours.toFixed(2)} (Normal: ${shift.normal_hours.toFixed(2)} | Weekend: ${shift.weekend_hours.toFixed(2)})</div>
+                ${shift.sanctions > 0 || shift.crimes > 0 || shift.wanted > 0 ? '<div style="margin-top: 8px;"><strong>🚨 Evenimente:</strong></div>' : ''}
+                ${shift.sanctions > 0 ? `<div>📋 Sancțiuni: <strong>${shift.sanctions}</strong></div>` : ''}
+                ${shift.crimes > 0 ? `<div>⚖️ Infracțiuni: <strong>${shift.crimes}</strong></div>` : ''}
+                ${shift.wanted > 0 ? `<div>👤 Persoane Urmărite: <strong>${shift.wanted}</strong></div>` : ''}
             </div>
         `;
         
