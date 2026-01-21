@@ -745,7 +745,8 @@ function handleShiftDetailsSubmit(event) {
     let hours = (end - start) / (1000 * 60 * 60);
     
     // Handle overnight shifts
-    if (hours < 0) {
+    const isOvernightShift = hours < 0;
+    if (isOvernightShift) {
         hours += 24;
     }
     
@@ -756,12 +757,47 @@ function handleShiftDetailsSubmit(event) {
     const isHoliday = appState.holidays.has(shiftDate);
     
     // Calculate normal vs weekend hours
-    let normalHours = hours;
+    let normalHours = 0;
     let weekendHours = 0;
     
-    if (isWeekend || isHoliday) {
-        weekendHours = hours;
-        normalHours = 0;
+    if (isOvernightShift) {
+        // For overnight shifts, split hours between two days
+        const hoursBeforeMidnight = 24 - parseInt(startTime.split(':')[0]) - (parseInt(startTime.split(':')[1]) / 60);
+        const hoursAfterMidnight = hours - hoursBeforeMidnight;
+        
+        // Check if start date is weekend/holiday
+        const startIsWeekendOrHoliday = isWeekend || isHoliday;
+        
+        // Check if next day is weekend/holiday
+        const nextDay = new Date(shiftDateObj);
+        nextDay.setDate(nextDay.getDate() + 1);
+        const nextDayOfWeek = nextDay.getDay();
+        const nextDayIsWeekend = nextDayOfWeek === 0 || nextDayOfWeek === 6;
+        const nextDayStr = `${nextDay.getFullYear()}-${String(nextDay.getMonth() + 1).padStart(2, '0')}-${String(nextDay.getDate()).padStart(2, '0')}`;
+        const nextDayIsHoliday = appState.holidays.has(nextDayStr);
+        const nextIsWeekendOrHoliday = nextDayIsWeekend || nextDayIsHoliday;
+        
+        // Calculate weekend hours for each part
+        if (startIsWeekendOrHoliday) {
+            weekendHours += hoursBeforeMidnight;
+        } else {
+            normalHours += hoursBeforeMidnight;
+        }
+        
+        if (nextIsWeekendOrHoliday) {
+            weekendHours += hoursAfterMidnight;
+        } else {
+            normalHours += hoursAfterMidnight;
+        }
+    } else {
+        // For same-day shifts
+        if (isWeekend || isHoliday) {
+            weekendHours = hours;
+            normalHours = 0;
+        } else {
+            normalHours = hours;
+            weekendHours = 0;
+        }
     }
     
     // Save shift to appState as OBJECT (not array)
