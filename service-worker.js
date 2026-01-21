@@ -1,6 +1,6 @@
 // Service Worker for Shift Calendar PWA
 
-const CACHE_NAME = 'shift-calendar-v1';
+const CACHE_NAME = 'shift-calendar-v3';
 const ASSETS_TO_CACHE = [
     '/',
     '/index.html',
@@ -61,9 +61,11 @@ self.addEventListener('fetch', event => {
         fetch(request)
             .then(response => {
                 // Cache successful responses
-                if (response && response.status === 200) {
-                    const cache = caches.open(CACHE_NAME);
-                    cache.then(c => c.put(request, response.clone()));
+                if (response && response.status === 200 && response.type === 'basic') {
+                    const responseToCache = response.clone();
+                    caches.open(CACHE_NAME).then(cache => {
+                        cache.put(request, responseToCache);
+                    });
                 }
                 return response;
             })

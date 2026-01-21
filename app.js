@@ -403,7 +403,12 @@ function updateDateDisplay() {
         document.getElementById('crimesInput').value = shift.crimes || 0;
         document.getElementById('wantedInput').value = shift.wanted || 0;
     } else {
-        clearFields();
+        // Clear fields without calling updateDisplay
+        document.getElementById('startTime').value = '';
+        document.getElementById('endTime').value = '';
+        document.getElementById('sanctionsInput').value = '';
+        document.getElementById('crimesInput').value = '';
+        document.getElementById('wantedInput').value = '';
     }
 }
 
@@ -613,14 +618,19 @@ async function loadShifts() {
 // ============ Authentication Functions ============
 
 async function checkAuth() {
+    console.log('checkAuth called');
     try {
         if (typeof supabase === 'undefined') {
             console.error('Supabase not initialized');
+            // Still initialize calendar even if Supabase is not available
+            initializeCalendar();
+            console.log('Opening login modal - supabase undefined');
             openLoginModal();
             return;
         }
         
         const { data: { session } } = await supabase.auth.getSession();
+        console.log('Session:', session);
         
         if (session) {
             appState.user.id = session.user.id;
@@ -631,10 +641,16 @@ async function checkAuth() {
             updateDisplay();
             displayUserProfile();
         } else {
+            // Initialize calendar even if not logged in
+            console.log('No session - initializing calendar and opening login');
+            initializeCalendar();
             openLoginModal();
         }
     } catch (error) {
         console.error('Auth check error:', error);
+        // Still initialize calendar on error
+        initializeCalendar();
+        console.log('Opening login modal - error caught');
         openLoginModal();
     }
 }
@@ -767,8 +783,15 @@ async function handleLogout() {
 
 // User Profile Management Functions
 function openLoginModal() {
+    console.log('openLoginModal called');
     const modal = document.getElementById('loginModal');
-    modal.classList.add('active');
+    console.log('Login modal element:', modal);
+    if (modal) {
+        modal.classList.add('active');
+        console.log('Modal classes:', modal.className);
+    } else {
+        console.error('Login modal element not found!');
+    }
     
     // Don't allow closing if not authenticated
     const closeBtn = document.getElementById('authCloseBtn');
@@ -963,7 +986,7 @@ function closeShiftDetailsModal() {
     document.getElementById('shiftWanted').value = '0';
 }
 
-function handleShiftDetailsSubmit(event) {
+async function handleShiftDetailsSubmit(event) {
     event.preventDefault();
     
     const shiftDate = document.getElementById('shiftDate').value;
