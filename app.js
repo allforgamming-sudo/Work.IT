@@ -995,9 +995,9 @@ function closeShiftDetailsModal() {
     document.getElementById('shiftDate').value = '';
     document.getElementById('shiftTimeStart').value = '';
     document.getElementById('shiftTimeEnd').value = '';
-    document.getElementById('shiftSanctions').value = '0';
-    document.getElementById('shiftCrimes').value = '0';
-    document.getElementById('shiftWanted').value = '0';
+    document.getElementById('shiftSanctions').value = '';
+    document.getElementById('shiftCrimes').value = '';
+    document.getElementById('shiftWanted').value = '';
 }
 
 async function handleShiftDetailsSubmit(event) {
