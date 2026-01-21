@@ -872,12 +872,6 @@ async function loadUserProfile() {
         console.error('Error loading user profile:', e);
     }
 }
-            appState.user.grade = userProfile.grade || 'Agent de politie';
-            console.log('User profile loaded from localStorage');
-        }
-    } catch (e) {
-        console.error('Error loading user profile:', e);
-    }
 }
 
 function displayUserProfile() {
