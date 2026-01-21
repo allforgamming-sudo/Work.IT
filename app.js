@@ -587,7 +587,14 @@ async function loadShifts() {
                 // Convert Supabase data to appState format
                 appState.shifts = {};
                 data.forEach(shift => {
-                    appState.shifts[shift.shift_date] = {
+                    // Ensure date is in correct local format (YYYY-MM-DD)
+                    let dateStr = shift.shift_date;
+                    // If date comes with time component, extract just the date
+                    if (dateStr.includes('T')) {
+                        dateStr = dateStr.split('T')[0];
+                    }
+                    
+                    appState.shifts[dateStr] = {
                         start: shift.start_time,
                         end: shift.end_time,
                         hours: parseFloat(shift.hours),
