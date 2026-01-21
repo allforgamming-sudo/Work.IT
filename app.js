@@ -18,21 +18,28 @@ let appState = {
 
 // Initialize App
 document.addEventListener('DOMContentLoaded', async function() {
+    console.log('DOM loaded, initializing app...');
     await checkAuth();
     
     // Close modal on background click
-    document.getElementById('loginModal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            closeLoginModal();
-        }
-    });
+    const loginModal = document.getElementById('loginModal');
+    if (loginModal) {
+        loginModal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeLoginModal();
+            }
+        });
+    }
     
     // Close shift details modal on background click
-    document.getElementById('shiftDetailsModal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            closeShiftDetailsModal();
-        }
-    });
+    const shiftModal = document.getElementById('shiftDetailsModal');
+    if (shiftModal) {
+        shiftModal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeShiftDetailsModal();
+            }
+        });
+    }
     
     // Mobile-friendly: Disable zoom on input focus
     document.querySelectorAll('input, select').forEach(el => {
@@ -871,7 +878,6 @@ async function loadUserProfile() {
     } catch (e) {
         console.error('Error loading user profile:', e);
     }
-}
 }
 
 function displayUserProfile() {
