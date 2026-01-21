@@ -575,7 +575,6 @@ function displayUserProfile() {
 function openShiftDetailsModal() {
     const modal = document.getElementById('shiftDetailsModal');
     modal.classList.add('active');
-    document.getElementById('shiftTimeStart').focus();
 }
 
 function closeShiftDetailsModal() {
