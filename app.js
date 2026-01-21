@@ -252,10 +252,10 @@ function quickAddShift(startTime, endTime) {
     const dateStr = `${year}-${month}-${day}`;
     document.getElementById('shiftDate').value = dateStr;
     
-    // Reset incidents to 0
-    document.getElementById('shiftSanctions').value = '0';
-    document.getElementById('shiftCrimes').value = '0';
-    document.getElementById('shiftWanted').value = '0';
+    // Reset incidents to empty (not 0)
+    document.getElementById('shiftSanctions').value = '';
+    document.getElementById('shiftCrimes').value = '';
+    document.getElementById('shiftWanted').value = '';
     
     // Provide visual feedback on mobile
     const btn = event.target.closest('.shift-btn');
@@ -1022,6 +1022,8 @@ async function handleShiftDetailsSubmit(event) {
     
     let shiftDate = document.getElementById('shiftDate').value;
     
+    console.log('📅 Shift date from input:', shiftDate);
+    
     // If no date selected, use selected date from calendar
     if (!shiftDate) {
         const dateToUse = appState.selectedDate || new Date();
@@ -1029,6 +1031,7 @@ async function handleShiftDetailsSubmit(event) {
         const month = String(dateToUse.getMonth() + 1).padStart(2, '0');
         const day = String(dateToUse.getDate()).padStart(2, '0');
         shiftDate = `${year}-${month}-${day}`;
+        console.log('📅 Using default date:', shiftDate);
     }
     
     const startTime = document.getElementById('shiftTimeStart').value;
@@ -1117,6 +1120,9 @@ async function handleShiftDetailsSubmit(event) {
         timestamp: new Date().toISOString()
     };
     
+    console.log('✅ Shift saved to appState with key:', shiftDate);
+    console.log('✅ Shift data:', appState.shifts[shiftDate]);
+    
     // Save to localStorage
     try {
         localStorage.setItem('shiftCalendarData', JSON.stringify({
@@ -1165,6 +1171,9 @@ async function handleShiftDetailsSubmit(event) {
     // Select the date to show details - parse as local date
     const [saveYear, saveMonth, saveDay] = shiftDate.split('-').map(num => parseInt(num));
     appState.selectedDate = new Date(saveYear, saveMonth - 1, saveDay);
+    
+    console.log('📅 Selected date set to:', appState.selectedDate);
+    console.log('📅 Date string format:', `${appState.selectedDate.getFullYear()}-${String(appState.selectedDate.getMonth() + 1).padStart(2, '0')}-${String(appState.selectedDate.getDate()).padStart(2, '0')}`);
     
     // Close modal first
     closeShiftDetailsModal();
