@@ -1108,15 +1108,21 @@ async function handleShiftDetailsSubmit(event) {
                 weekend_shift: isWeekend || isHoliday
             };
             
-            const { error } = await supabase
+            console.log('Saving shift to Supabase:', shiftData);
+            
+            const { data, error } = await supabase
                 .from('shifts')
-                .upsert(shiftData, { onConflict: 'user_id,shift_date' });
+                .upsert(shiftData, { onConflict: 'user_id,shift_date' })
+                .select();
             
             if (error) {
-                console.error('Error saving to Supabase:', error);
+                console.error('❌ Error saving shift to Supabase:', error);
+                alert('Eroare la salvarea schimbului în baza de date: ' + error.message);
             } else {
-                console.log('✅ Shift saved to Supabase');
+                console.log('✅ Shift saved to Supabase:', data);
             }
+        } else {
+            console.warn('⚠️ Not saving to Supabase - user not authenticated or Supabase not initialized');
         }
     } catch (e) {
         console.error('❌ Error saving shifts:', e);
