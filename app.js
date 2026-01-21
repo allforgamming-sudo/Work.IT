@@ -989,9 +989,19 @@ function openShiftDetailsModal() {
     const modal = document.getElementById('shiftDetailsModal');
     modal.classList.add('active');
     
+    // Pre-fill date with selected date if not already set
+    const dateInput = document.getElementById('shiftDate');
+    if (!dateInput.value) {
+        const dateToUse = appState.selectedDate || new Date();
+        const year = dateToUse.getFullYear();
+        const month = String(dateToUse.getMonth() + 1).padStart(2, '0');
+        const day = String(dateToUse.getDate()).padStart(2, '0');
+        dateInput.value = `${year}-${month}-${day}`;
+    }
+    
     // Auto-focus first field for quick entry
     setTimeout(() => {
-        document.getElementById('shiftDate').focus();
+        dateInput.focus();
     }, 100);
 }
 
