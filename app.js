@@ -643,6 +643,17 @@ async function checkAuth() {
             appState.user.id = session.user.id;
             appState.user.email = session.user.email;
             await loadUserProfile();
+            
+            // If profile is incomplete, logout and restart
+            if (!appState.user.name || !appState.user.grade) {
+                console.log('Profile incomplete, forcing logout');
+                await supabase.auth.signOut();
+                initializeCalendar();
+                openLoginModal();
+                alert('Te rog să te înregistrezi din nou pentru a completa profilul.');
+                return;
+            }
+            
             await loadShifts();
             initializeCalendar();
             updateDisplay();
