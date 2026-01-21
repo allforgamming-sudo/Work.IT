@@ -3,9 +3,12 @@ let appState = {
     shifts: {},
     selectedDate: new Date(),
     user: {
+        id: null,
         name: '',
-        grade: ''
+        grade: '',
+        email: ''
     },
+    authMode: 'login', // 'login' or 'signup'
     holidays: new Set([
         "2026-01-01", "2026-01-02", "2026-01-06", "2026-01-07", "2026-01-24",
         "2026-04-10", "2026-04-12", "2026-04-13", "2026-05-01", "2026-05-31",
@@ -14,12 +17,8 @@ let appState = {
 };
 
 // Initialize App
-document.addEventListener('DOMContentLoaded', function() {
-    loadUserProfile();
-    loadShifts();
-    initializeCalendar();
-    updateDisplay();
-    displayUserProfile();
+document.addEventListener('DOMContentLoaded', async function() {
+    await checkAuth();
     
     // Close modal on background click
     document.getElementById('loginModal').addEventListener('click', function(e) {
@@ -563,14 +562,205 @@ function saveShifts() {
     localStorage.setItem('shiftCalendarData', JSON.stringify(dataToSave));
 }
 
-function loadShifts() {
-    const saved = localStorage.getItem('shiftCalendarData');
-    if (saved) {
-        try {
+async function loadShifts() {
+    try {
+        // Try to load from Supabase first
+        if (typeof supabase !== 'undefined' && appState.user.id) {
+            const { data, error } = await supabase
+                .from('shifts')
+                .select('*')
+                .eq('user_id', appState.user.id);
+            
+            if (data && !error) {
+                // Convert Supabase data to appState format
+                appState.shifts = {};
+                data.forEach(shift => {
+                    appState.shifts[shift.shift_date] = {
+                        start: shift.start_time,
+                        end: shift.end_time,
+                        hours: parseFloat(shift.hours),
+                        normal_hours: parseFloat(shift.normal_hours),
+                        weekend_hours: parseFloat(shift.weekend_hours),
+                        sanctions: shift.sanctions || 0,
+                        crimes: shift.crimes || 0,
+                        wanted: shift.wanted || 0,
+                        weekend_shift: shift.weekend_shift,
+                        timestamp: shift.created_at
+                    };
+                });
+                console.log('Shifts loaded from Supabase:', data.length);
+                
+                // Save to localStorage as backup
+                localStorage.setItem('shiftCalendarData', JSON.stringify({
+                    shifts: appState.shifts
+                }));
+                return;
+            }
+        }
+        
+        // Fallback to localStorage
+        const saved = localStorage.getItem('shiftCalendarData');
+        if (saved) {
             const data = JSON.parse(saved);
             appState.shifts = data.shifts || {};
-        } catch (e) {
-            console.error('Error loading shifts:', e);
+            console.log('Shifts loaded from localStorage');
+        }
+    } catch (e) {
+        console.error('Error loading shifts:', e);
+    }
+}
+
+// ============ Authentication Functions ============
+
+async function checkAuth() {
+    try {
+        if (typeof supabase === 'undefined') {
+            console.error('Supabase not initialized');
+            openLoginModal();
+            return;
+        }
+        
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session) {
+            appState.user.id = session.user.id;
+            appState.user.email = session.user.email;
+            await loadUserProfile();
+            await loadShifts();
+            initializeCalendar();
+            updateDisplay();
+            displayUserProfile();
+        } else {
+            openLoginModal();
+        }
+    } catch (error) {
+        console.error('Auth check error:', error);
+        openLoginModal();
+    }
+}
+
+function toggleAuthMode(event) {
+    event.preventDefault();
+    appState.authMode = appState.authMode === 'login' ? 'signup' : 'login';
+    
+    const profileFields = document.getElementById('profileFields');
+    const modalTitle = document.getElementById('authModalTitle');
+    const submitBtn = document.getElementById('authSubmitBtn');
+    const switchText = document.getElementById('authSwitchText');
+    const switchLink = document.getElementById('authSwitchLink');
+    const nameField = document.getElementById('userName');
+    const gradeField = document.getElementById('userGrade');
+    
+    if (appState.authMode === 'signup') {
+        modalTitle.textContent = '📝 Înregistrare';
+        submitBtn.textContent = 'Creare Cont';
+        switchText.textContent = 'Ai deja cont? ';
+        switchLink.textContent = 'Conectare';
+        profileFields.style.display = 'block';
+        nameField.required = true;
+        gradeField.required = true;
+    } else {
+        modalTitle.textContent = '🔐 Autentificare';
+        submitBtn.textContent = 'Conectare';
+        switchText.textContent = 'Nu ai cont? ';
+        switchLink.textContent = 'Înregistrare';
+        profileFields.style.display = 'none';
+        nameField.required = false;
+        gradeField.required = false;
+    }
+}
+
+async function handleAuth(event) {
+    event.preventDefault();
+    
+    const email = document.getElementById('userEmail').value.trim();
+    const password = document.getElementById('userPassword').value;
+    
+    try {
+        if (appState.authMode === 'signup') {
+            // Sign up
+            const name = document.getElementById('userName').value.trim();
+            const grade = document.getElementById('userGrade').value;
+            
+            if (!name || !grade) {
+                alert('Te rog completează toate câmpurile');
+                return;
+            }
+            
+            const { data, error } = await supabase.auth.signUp({
+                email: email,
+                password: password
+            });
+            
+            if (error) throw error;
+            
+            if (data.user) {
+                appState.user.id = data.user.id;
+                appState.user.email = data.user.email;
+                appState.user.name = name;
+                appState.user.grade = grade;
+                
+                await saveUserProfile();
+                await loadShifts();
+                initializeCalendar();
+                updateDisplay();
+                displayUserProfile();
+                closeLoginModal();
+                alert('✅ Cont creat cu succes!');
+            }
+        } else {
+            // Sign in
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email: email,
+                password: password
+            });
+            
+            if (error) throw error;
+            
+            if (data.user) {
+                appState.user.id = data.user.id;
+                appState.user.email = data.user.email;
+                
+                await loadUserProfile();
+                await loadShifts();
+                initializeCalendar();
+                updateDisplay();
+                displayUserProfile();
+                closeLoginModal();
+            }
+        }
+    } catch (error) {
+        console.error('Auth error:', error);
+        alert('Eroare: ' + (error.message || 'A apărut o eroare la autentificare'));
+    }
+}
+
+async function handleLogout() {
+    const confirm = window.confirm('Ești sigur că vrei să te deconectezi?');
+    
+    if (confirm) {
+        try {
+            await supabase.auth.signOut();
+            
+            // Clear app state
+            appState.shifts = {};
+            appState.user = { id: null, name: '', grade: '', email: '' };
+            
+            // Clear local storage
+            localStorage.removeItem('shiftCalendarData');
+            localStorage.removeItem('userProfile');
+            localStorage.removeItem('userId');
+            
+            // Reset UI
+            document.getElementById('userInfo').style.display = 'none';
+            
+            // Show login modal
+            openLoginModal();
+            
+            alert('✅ Deconectat cu succes!');
+        } catch (error) {
+            console.error('Logout error:', error);
+            alert('Eroare la deconectare');
         }
     }
 }
@@ -579,7 +769,14 @@ function loadShifts() {
 function openLoginModal() {
     const modal = document.getElementById('loginModal');
     modal.classList.add('active');
-    document.getElementById('userName').focus();
+    
+    // Don't allow closing if not authenticated
+    const closeBtn = document.getElementById('authCloseBtn');
+    if (appState.user.id) {
+        closeBtn.style.display = 'flex';
+    } else {
+        closeBtn.style.display = 'none';
+    }
 }
 
 function closeLoginModal() {
@@ -590,48 +787,76 @@ function closeLoginModal() {
     document.getElementById('userGrade').value = 'Polițist';
 }
 
-function handleLogin(event) {
-    event.preventDefault();
-    
-    const name = document.getElementById('userName').value.trim();
-    const grade = document.getElementById('userGrade').value;
-    
-    if (!name) {
-        alert('Te rog introdu numele tău');
-        return;
-    }
-    
-    // Save to appState and localStorage
-    appState.user.name = name;
-    appState.user.grade = grade;
-    saveUserProfile();
-    
-    // Update display
-    displayUserProfile();
-    
-    // Close modal
-    closeLoginModal();
-}
-
-function saveUserProfile() {
+async function saveUserProfile() {
     try {
         const userProfile = {
             name: appState.user.name,
             grade: appState.user.grade
         };
+        
+        // Save to localStorage as backup
         localStorage.setItem('userProfile', JSON.stringify(userProfile));
+        
+        // Save to Supabase
+        if (typeof supabase !== 'undefined') {
+            if (appState.user.id) {
+                // Update existing user
+                const { error } = await supabase
+                    .from('users')
+                    .update(userProfile)
+                    .eq('id', appState.user.id);
+                
+                if (error) throw error;
+                console.log('User profile updated in Supabase');
+            } else {
+                // Create new user
+                const { data, error } = await supabase
+                    .from('users')
+                    .insert([userProfile])
+                    .select()
+                    .single();
+                
+                if (error) throw error;
+                appState.user.id = data.id;
+                localStorage.setItem('userId', data.id);
+                console.log('User profile created in Supabase:', data.id);
+            }
+        }
     } catch (e) {
         console.error('Error saving user profile:', e);
+        alert('Eroare la salvarea profilului. Datele vor fi salvate local.');
     }
 }
 
-function loadUserProfile() {
+async function loadUserProfile() {
     try {
+        // Try to load user ID from localStorage
+        const savedUserId = localStorage.getItem('userId');
+        
+        // Try to load from Supabase first
+        if (typeof supabase !== 'undefined' && savedUserId) {
+            const { data, error } = await supabase
+                .from('users')
+                .select('*')
+                .eq('id', savedUserId)
+                .single();
+            
+            if (data && !error) {
+                appState.user.id = data.id;
+                appState.user.name = data.name || '';
+                appState.user.grade = data.grade || 'Agent de politie';
+                console.log('User profile loaded from Supabase');
+                return;
+            }
+        }
+        
+        // Fallback to localStorage
         const saved = localStorage.getItem('userProfile');
         if (saved) {
             const userProfile = JSON.parse(saved);
             appState.user.name = userProfile.name || '';
             appState.user.grade = userProfile.grade || 'Agent de politie';
+            console.log('User profile loaded from localStorage');
         }
     } catch (e) {
         console.error('Error loading user profile:', e);
@@ -663,7 +888,7 @@ function closeSettingsModal() {
     modal.classList.remove('active');
 }
 
-function clearAllData() {
+async function clearAllData() {
     console.log('clearAllData function called');
     const confirmDelete = confirm('⚠️ Ești sigur că vrei să ștergi toate datele?\n\nAceastă acțiune va șterge permanent:\n• Toate schimburile înregistrate\n• Statisticile\n• Evenimentele\n\nAceastă acțiune NU poate fi anulată!');
     
@@ -676,7 +901,21 @@ function clearAllData() {
         
         if (doubleConfirm) {
             try {
-                // Clear all shifts data
+                // Clear from Supabase
+                if (typeof supabase !== 'undefined' && appState.user.id) {
+                    const { error } = await supabase
+                        .from('shifts')
+                        .delete()
+                        .eq('user_id', appState.user.id);
+                    
+                    if (error) {
+                        console.error('Error clearing Supabase data:', error);
+                    } else {
+                        console.log('Data cleared from Supabase');
+                    }
+                }
+                
+                // Clear all shifts data locally
                 appState.shifts = {};
                 localStorage.removeItem('shiftCalendarData');
                 
@@ -819,7 +1058,34 @@ function handleShiftDetailsSubmit(event) {
         localStorage.setItem('shiftCalendarData', JSON.stringify({
             shifts: appState.shifts
         }));
-        console.log('✅ Shift saved successfully:', appState.shifts[shiftDate]);
+        console.log('✅ Shift saved to localStorage');
+        
+        // Save to Supabase
+        if (typeof supabase !== 'undefined' && appState.user.id) {
+            const shiftData = {
+                user_id: appState.user.id,
+                shift_date: shiftDate,
+                start_time: startTime,
+                end_time: endTime,
+                hours: hours,
+                normal_hours: normalHours,
+                weekend_hours: weekendHours,
+                sanctions: sanctions,
+                crimes: crimes,
+                wanted: wanted,
+                weekend_shift: isWeekend || isHoliday
+            };
+            
+            const { error } = await supabase
+                .from('shifts')
+                .upsert(shiftData, { onConflict: 'user_id,shift_date' });
+            
+            if (error) {
+                console.error('Error saving to Supabase:', error);
+            } else {
+                console.log('✅ Shift saved to Supabase');
+            }
+        }
     } catch (e) {
         console.error('❌ Error saving shifts:', e);
         alert('Eroare la salvarea datelor: ' + e.message);

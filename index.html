@@ -56,33 +56,59 @@
     <div id="loginModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>👤 Profil Utilizator</h2>
-                <button class="modal-close" onclick="closeLoginModal()">&times;</button>
+                <h2 id="authModalTitle">🔐 Autentificare</h2>
+                <button class="modal-close" onclick="closeLoginModal()" id="authCloseBtn">&times;</button>
             </div>
-            <form class="login-form" onsubmit="handleLogin(event)">
+            <form class="login-form" onsubmit="handleAuth(event)" id="authForm">
                 <div class="form-group">
-                    <label for="userName">Numele Tău:</label>
+                    <label for="userEmail">Email:</label>
                     <input 
-                        type="text" 
-                        id="userName" 
-                        placeholder="Ex: Ion Popescu" 
+                        type="email" 
+                        id="userEmail" 
+                        placeholder="exemplu@email.com" 
                         required
-                        maxlength="50"
                     >
                 </div>
                 <div class="form-group">
-                    <label for="userGrade">Gradul:</label>
-                    <select id="userGrade" required>
-                        <option value="">-- Selectează Gradul --</option>
-                        <option value="Agent de politie">Agent de politie</option>
-                        <option value="Agent principal">Agent principal</option>
-                        <option value="Agent sef adjunct">Agent sef adjunct</option>
-                        <option value="Agent sef">Agent sef</option>
-                        <option value="Agent sef principal">Agent sef principal</option>
-                        <option value="Ofiter">Ofiter</option>
-                    </select>
+                    <label for="userPassword">Parolă:</label>
+                    <input 
+                        type="password" 
+                        id="userPassword" 
+                        placeholder="Minim 6 caractere" 
+                        required
+                        minlength="6"
+                    >
                 </div>
-                <button type="submit" class="btn-login">Salvare Profil</button>
+                
+                <div id="profileFields" style="display: none;">
+                    <div class="form-group">
+                        <label for="userName">Numele Tău:</label>
+                        <input 
+                            type="text" 
+                            id="userName" 
+                            placeholder="Ex: Ion Popescu" 
+                            maxlength="50"
+                        >
+                    </div>
+                    <div class="form-group">
+                        <label for="userGrade">Gradul:</label>
+                        <select id="userGrade">
+                            <option value="">-- Selectează Gradul --</option>
+                            <option value="Agent de politie">Agent de politie</option>
+                            <option value="Agent principal">Agent principal</option>
+                            <option value="Agent sef adjunct">Agent sef adjunct</option>
+                            <option value="Agent sef">Agent sef</option>
+                            <option value="Agent sef principal">Agent sef principal</option>
+                            <option value="Ofiter">Ofiter</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn-login" id="authSubmitBtn">Conectare</button>
+                <p class="auth-switch">
+                    <span id="authSwitchText">Nu ai cont? </span>
+                    <a href="#" onclick="toggleAuthMode(event)" id="authSwitchLink">Înregistrare</a>
+                </p>
             </form>
         </div>
     </div>
@@ -119,7 +145,7 @@
             </div>
             <div class="user-info" id="userInfo" style="display: none;">
                 <span id="userDisplay"></span>
-                <button class="edit-profile-btn" onclick="openLoginModal()" title="Editare">✎</button>
+                <button class="edit-profile-btn" onclick="handleLogout()" title="Deconectare">🚪</button>
             </div>
         </header>
 
@@ -252,6 +278,9 @@
         </section>
     </div>
 
+    <!-- Supabase Client Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
     <script src="app.js"></script>
     <script>
         // Register Service Worker
