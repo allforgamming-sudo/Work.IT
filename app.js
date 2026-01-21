@@ -58,6 +58,18 @@ function initializeCalendar() {
     renderCalendar(appState.selectedDate);
 }
 
+function updateCalendar() {
+    renderCalendar(appState.selectedDate);
+}
+
+function changeMonth(delta) {
+    const newDate = new Date(appState.selectedDate);
+    newDate.setMonth(newDate.getMonth() + delta);
+    appState.selectedDate = newDate;
+    renderCalendar(appState.selectedDate);
+    updateDisplay();
+}
+
 function renderCalendar(date) {
     const calendarDiv = document.getElementById('calendar');
     calendarDiv.innerHTML = '';
@@ -65,13 +77,32 @@ function renderCalendar(date) {
     const year = date.getFullYear();
     const month = date.getMonth();
     
-    // Add month/year header
+    // Add month/year header with navigation
     const header = document.createElement('div');
     header.style.gridColumn = '1 / -1';
-    header.style.textAlign = 'center';
-    header.style.fontWeight = '700';
+    header.style.display = 'flex';
+    header.style.justifyContent = 'space-between';
+    header.style.alignItems = 'center';
     header.style.marginBottom = '8px';
-    header.textContent = new Date(year, month).toLocaleDateString('ro-RO', { month: 'long', year: 'numeric' });
+    header.style.padding = '0 8px';
+    
+    const prevBtn = document.createElement('button');
+    prevBtn.textContent = '◀';
+    prevBtn.className = 'calendar-nav-btn';
+    prevBtn.onclick = () => changeMonth(-1);
+    
+    const monthYear = document.createElement('span');
+    monthYear.style.fontWeight = '700';
+    monthYear.textContent = new Date(year, month).toLocaleDateString('ro-RO', { month: 'long', year: 'numeric' });
+    
+    const nextBtn = document.createElement('button');
+    nextBtn.textContent = '▶';
+    nextBtn.className = 'calendar-nav-btn';
+    nextBtn.onclick = () => changeMonth(1);
+    
+    header.appendChild(prevBtn);
+    header.appendChild(monthYear);
+    header.appendChild(nextBtn);
     calendarDiv.appendChild(header);
     
     // Day headers
@@ -114,22 +145,47 @@ function renderCalendar(date) {
 function createDayElement(day, fullDate, isOtherMonth) {
     const dayDiv = document.createElement('div');
     dayDiv.className = 'calendar-day';
-    dayDiv.textContent = day;
     
-    const dateStr = fullDate.toISOString().split('T')[0];
+    // Use local date to avoid timezone issues
+    const year = fullDate.getFullYear();
+    const month = String(fullDate.getMonth() + 1).padStart(2, '0');
+    const dayNum = String(fullDate.getDate()).padStart(2, '0');
+    const dateStr = `${year}-${month}-${dayNum}`;
     
     if (isOtherMonth) {
         dayDiv.classList.add('other-month');
+        dayDiv.textContent = day;
     } else {
         dayDiv.addEventListener('click', () => selectDate(fullDate));
         
-        // Check if has shift
+        // Check if has shift and add shift indicator
         if (appState.shifts[dateStr]) {
             dayDiv.classList.add('has-shift');
+            const shift = appState.shifts[dateStr];
+            const shiftLabel = getShiftLabel(shift.start, shift.end);
+            
+            // Create shift label element
+            const shiftSpan = document.createElement('div');
+            shiftSpan.className = 'shift-label';
+            shiftSpan.textContent = shiftLabel;
+            dayDiv.appendChild(shiftSpan);
+            
+            // Create day number element
+            const daySpan = document.createElement('div');
+            daySpan.className = 'day-number';
+            daySpan.textContent = day;
+            dayDiv.appendChild(daySpan);
+        } else {
+            dayDiv.textContent = day;
         }
         
-        // Check if selected
-        if (dateStr === appState.selectedDate.toISOString().split('T')[0]) {
+        // Check if selected - use same date format
+        const selectedYear = appState.selectedDate.getFullYear();
+        const selectedMonth = String(appState.selectedDate.getMonth() + 1).padStart(2, '0');
+        const selectedDay = String(appState.selectedDate.getDate()).padStart(2, '0');
+        const selectedDateStr = `${selectedYear}-${selectedMonth}-${selectedDay}`;
+        
+        if (dateStr === selectedDateStr) {
             dayDiv.classList.add('selected');
         }
         
@@ -142,6 +198,26 @@ function createDayElement(day, fullDate, isOtherMonth) {
     }
     
     return dayDiv;
+}
+
+function getShiftLabel(startTime, endTime) {
+    // Determine shift type based on start time
+    if (startTime === '06:00') {
+        return 'Sch I';
+    } else if (startTime === '14:00') {
+        return 'Sch II';
+    } else if (startTime === '22:00') {
+        return 'Sch III';
+    }
+    // For custom shifts, try to match by time range
+    const hour = parseInt(startTime.split(':')[0]);
+    if (hour >= 6 && hour < 14) {
+        return 'Sch I';
+    } else if (hour >= 14 && hour < 22) {
+        return 'Sch II';
+    } else {
+        return 'Sch III';
+    }
 }
 
 function isWeekend(date) {
@@ -164,7 +240,10 @@ function quickAddShift(startTime, endTime) {
     
     // Set date to selected date from calendar or today if none selected
     const dateToUse = appState.selectedDate || new Date();
-    const dateStr = dateToUse.toISOString().split('T')[0];
+    const year = dateToUse.getFullYear();
+    const month = String(dateToUse.getMonth() + 1).padStart(2, '0');
+    const day = String(dateToUse.getDate()).padStart(2, '0');
+    const dateStr = `${year}-${month}-${day}`;
     document.getElementById('shiftDate').value = dateStr;
     
     // Reset incidents to 0
@@ -569,6 +648,60 @@ function displayUserProfile() {
     } else {
         userInfo.style.display = 'none';
         userDisplay.textContent = '';
+    }
+}
+
+// ============ Settings Modal Functions ============
+
+function openSettingsModal() {
+    const modal = document.getElementById('settingsModal');
+    modal.classList.add('active');
+}
+
+function closeSettingsModal() {
+    const modal = document.getElementById('settingsModal');
+    modal.classList.remove('active');
+}
+
+function clearAllData() {
+    console.log('clearAllData function called');
+    const confirmDelete = confirm('⚠️ Ești sigur că vrei să ștergi toate datele?\n\nAceastă acțiune va șterge permanent:\n• Toate schimburile înregistrate\n• Statisticile\n• Evenimentele\n\nAceastă acțiune NU poate fi anulată!');
+    
+    console.log('First confirmation:', confirmDelete);
+    
+    if (confirmDelete) {
+        const doubleConfirm = confirm('🚨 CONFIRMARE FINALĂ\n\nVrei să continui cu ștergerea tuturor datelor?');
+        
+        console.log('Second confirmation:', doubleConfirm);
+        
+        if (doubleConfirm) {
+            try {
+                // Clear all shifts data
+                appState.shifts = {};
+                localStorage.removeItem('shiftCalendarData');
+                
+                // Reset selected date to today
+                appState.selectedDate = new Date();
+                
+                console.log('Data cleared, updating UI...');
+                
+                // Update all UI components
+                updateCalendar();
+                updateStatistics();
+                updateShiftDisplay();
+                updateIncidents();
+                displayAllShifts();
+                
+                console.log('UI updated successfully');
+                
+                // Close modal and show success
+                closeSettingsModal();
+                alert('✅ Toate datele au fost șterse cu succes!');
+            } catch (error) {
+                console.error('Error clearing data:', error);
+                alert('Eroare la ștergerea datelor: ' + error.message);
+            }
+        }
     }
 }
 

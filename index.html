@@ -87,6 +87,23 @@
         </div>
     </div>
 
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>⚙️ Setări</h2>
+                <button class="modal-close" onclick="closeSettingsModal()">&times;</button>
+            </div>
+            <div class="settings-content">
+                <div class="settings-section">
+                    <h3>Gestionare Date</h3>
+                    <p class="settings-description">Șterge permanent toate schimburile și statisticile înregistrate.</p>
+                    <button class="btn btn-danger" onclick="clearAllData()">🗑️ Șterge Toate Datele</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="container">
         <!-- Header -->
         <header class="app-header">
@@ -95,7 +112,10 @@
                     <h1>📅 Calendar de Schimburi</h1>
                     <p class="subtitle">Tracker Ore Lucrate</p>
                 </div>
-                <button class="profile-btn" onclick="openLoginModal()" title="Profil">👤</button>
+                <div class="header-buttons">
+                    <button class="profile-btn" onclick="openLoginModal()" title="Profil">👤</button>
+                    <button class="settings-btn" onclick="openSettingsModal()" title="Setări">⚙️</button>
+                </div>
             </div>
             <div class="user-info" id="userInfo" style="display: none;">
                 <span id="userDisplay"></span>
