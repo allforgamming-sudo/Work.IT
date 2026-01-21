@@ -1010,7 +1010,17 @@ function closeShiftDetailsModal() {
 async function handleShiftDetailsSubmit(event) {
     event.preventDefault();
     
-    const shiftDate = document.getElementById('shiftDate').value;
+    let shiftDate = document.getElementById('shiftDate').value;
+    
+    // If no date selected, use selected date from calendar
+    if (!shiftDate) {
+        const dateToUse = appState.selectedDate || new Date();
+        const year = dateToUse.getFullYear();
+        const month = String(dateToUse.getMonth() + 1).padStart(2, '0');
+        const day = String(dateToUse.getDate()).padStart(2, '0');
+        shiftDate = `${year}-${month}-${day}`;
+    }
+    
     const startTime = document.getElementById('shiftTimeStart').value;
     const endTime = document.getElementById('shiftTimeEnd').value;
     const sanctions = parseInt(document.getElementById('shiftSanctions').value) || 0;
@@ -1033,8 +1043,9 @@ async function handleShiftDetailsSubmit(event) {
         hours += 24;
     }
     
-    // Check if date is weekend or holiday
-    const shiftDateObj = new Date(shiftDate + 'T00:00:00');
+    // Check if date is weekend or holiday - parse as local date
+    const [year, month, day] = shiftDate.split('-').map(num => parseInt(num));
+    const shiftDateObj = new Date(year, month - 1, day);
     const dayOfWeek = shiftDateObj.getDay();
     const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
     const isHoliday = appState.holidays.has(shiftDate);
@@ -1052,8 +1063,7 @@ async function handleShiftDetailsSubmit(event) {
         const startIsWeekendOrHoliday = isWeekend || isHoliday;
         
         // Check if next day is weekend/holiday
-        const nextDay = new Date(shiftDateObj);
-        nextDay.setDate(nextDay.getDate() + 1);
+        const nextDay = new Date(year, month - 1, day + 1);
         const nextDayOfWeek = nextDay.getDay();
         const nextDayIsWeekend = nextDayOfWeek === 0 || nextDayOfWeek === 6;
         const nextDayStr = `${nextDay.getFullYear()}-${String(nextDay.getMonth() + 1).padStart(2, '0')}-${String(nextDay.getDate()).padStart(2, '0')}`;
@@ -1142,9 +1152,9 @@ async function handleShiftDetailsSubmit(event) {
         return;
     }
     
-    // Select the date to show details
-    const dateObj = new Date(shiftDate + 'T00:00:00');
-    appState.selectedDate = dateObj;
+    // Select the date to show details - parse as local date
+    const [saveYear, saveMonth, saveDay] = shiftDate.split('-').map(num => parseInt(num));
+    appState.selectedDate = new Date(saveYear, saveMonth - 1, saveDay);
     
     // Close modal first
     closeShiftDetailsModal();
