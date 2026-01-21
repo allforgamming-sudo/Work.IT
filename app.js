@@ -1147,3 +1147,26 @@ async function handleShiftDetailsSubmit(event) {
     alert('✅ Schimb salvat cu succes!');
 }
 
+// Handle Enter key in shift form - move to next field instead of submitting
+document.addEventListener('DOMContentLoaded', () => {
+    const shiftForm = document.getElementById('shiftDetailsForm');
+    if (shiftForm) {
+        const inputs = shiftForm.querySelectorAll('input');
+        
+        inputs.forEach((input, index) => {
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault(); // Prevent form submission
+                    
+                    // Move to next field, or submit if on last field
+                    if (index < inputs.length - 1) {
+                        inputs[index + 1].focus();
+                    } else {
+                        // On last field, submit the form
+                        shiftForm.requestSubmit();
+                    }
+                }
+            });
+        });
+    }
+});
