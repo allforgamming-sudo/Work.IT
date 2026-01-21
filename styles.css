@@ -649,8 +649,10 @@ body {
     padding: 20px;
     box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.15);
     animation: slideUp 0.3s ease;
-    max-height: 90vh;
+    max-height: 85vh;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
 }
 
 .modal-header {
@@ -712,13 +714,14 @@ body {
     padding: 12px;
     border: 2px solid var(--border-color);
     border-radius: 6px;
-    font-size: 14px;
+    font-size: 16px;
     font-family: inherit;
     transition: all 0.2s ease;
     -webkit-appearance: none;
     appearance: none;
     background-color: var(--card-bg);
     color: var(--text-primary);
+    touch-action: manipulation;
 }
 
 .form-group select {

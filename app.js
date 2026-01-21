@@ -162,9 +162,10 @@ function quickAddShift(startTime, endTime) {
     document.getElementById('shiftTimeStart').value = startTime;
     document.getElementById('shiftTimeEnd').value = endTime;
     
-    // Set today's date
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('shiftDate').value = today;
+    // Set date to selected date from calendar or today if none selected
+    const dateToUse = appState.selectedDate || new Date();
+    const dateStr = dateToUse.toISOString().split('T')[0];
+    document.getElementById('shiftDate').value = dateStr;
     
     // Reset incidents to 0
     document.getElementById('shiftSanctions').value = '0';
