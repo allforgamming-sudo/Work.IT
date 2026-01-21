@@ -861,15 +861,6 @@ async function saveUserProfile() {
         alert('Eroare la salvarea profilului: ' + e.message);
     }
 }
-            } else {
-                console.log('✅ User profile saved to Supabase');
-            }
-        }
-    } catch (e) {
-        console.error('Error saving user profile:', e);
-        alert('Eroare la salvarea profilului. Datele vor fi salvate local.');
-    }
-}
 
 async function loadUserProfile() {
     try {
