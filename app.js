@@ -270,7 +270,7 @@ function quickAddShift(startTime, endTime) {
     openShiftDetailsModal();
 }
 
-function saveShift() {
+async function saveShift() {
     const dateStr = appState.selectedDate.toISOString().split('T')[0];
     const startTime = document.getElementById('startTime').value;
     const endTime = document.getElementById('endTime').value;
@@ -298,16 +298,69 @@ function saveShift() {
     };
     
     saveShifts();
+    
+    // Save to Supabase
+    if (typeof supabase !== 'undefined' && appState.user.id) {
+        // Parse date correctly for weekend check
+        const [year, month, day] = dateStr.split('-').map(num => parseInt(num));
+        const shiftDateObj = new Date(year, month - 1, day);
+        const dayOfWeek = shiftDateObj.getDay();
+        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+        const isHoliday = appState.holidays.has(dateStr);
+        
+        const shiftData = {
+            user_id: appState.user.id,
+            shift_date: dateStr,
+            start_time: startTime,
+            end_time: endTime,
+            hours: hours.total,
+            normal_hours: hours.normal,
+            weekend_hours: hours.weekend,
+            sanctions: sanctions,
+            crimes: crimes,
+            wanted: wanted,
+            weekend_shift: isWeekend || isHoliday
+        };
+        
+        const { data, error } = await supabase
+            .from('shifts')
+            .upsert(shiftData, { onConflict: 'user_id,shift_date' })
+            .select();
+        
+        if (error) {
+            console.error('❌ Error saving shift to Supabase:', error);
+            alert('Eroare la salvarea schimbului: ' + error.message);
+        } else {
+            console.log('✅ Shift saved to Supabase:', data);
+        }
+    }
+    
     clearFields();
     renderCalendar(appState.selectedDate);
     updateDisplay();
 }
 
-function deleteShift() {
+async function deleteShift() {
     const dateStr = appState.selectedDate.toISOString().split('T')[0];
     if (appState.shifts[dateStr]) {
         delete appState.shifts[dateStr];
         saveShifts();
+        
+        // Delete from Supabase
+        if (typeof supabase !== 'undefined' && appState.user.id) {
+            const { error } = await supabase
+                .from('shifts')
+                .delete()
+                .eq('user_id', appState.user.id)
+                .eq('shift_date', dateStr);
+            
+            if (error) {
+                console.error('❌ Error deleting shift from Supabase:', error);
+            } else {
+                console.log('✅ Shift deleted from Supabase');
+            }
+        }
+        
         clearFields();
         renderCalendar(appState.selectedDate);
         updateDisplay();
