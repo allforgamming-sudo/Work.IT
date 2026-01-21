@@ -659,7 +659,10 @@ function handleShiftDetailsSubmit(event) {
     const dateObj = new Date(shiftDate + 'T00:00:00');
     appState.selectedDate = dateObj;
     
-    // Update UI
+    // Close modal first
+    closeShiftDetailsModal();
+    
+    // Update UI in real-time
     updateCalendar();
     updateStats();
     updateShiftDisplay();
@@ -667,8 +670,5 @@ function handleShiftDetailsSubmit(event) {
     
     // Show success message
     alert('✅ Schimb salvat cu succes!');
-    
-    // Close modal
-    closeShiftDetailsModal();
 }
 
