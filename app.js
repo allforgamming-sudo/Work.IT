@@ -836,18 +836,31 @@ async function saveUserProfile() {
             grade: appState.user.grade
         };
         
+        console.log('Saving user profile to Supabase:', userProfile);
+        
         // Save to localStorage as backup
         localStorage.setItem('userProfile', JSON.stringify(userProfile));
         
         // Save to Supabase
         if (typeof supabase !== 'undefined' && appState.user.id) {
             // Upsert user profile (insert or update)
-            const { error } = await supabase
+            const { data, error } = await supabase
                 .from('users')
-                .upsert(userProfile, { onConflict: 'id' });
+                .upsert(userProfile, { onConflict: 'id' })
+                .select();
             
             if (error) {
-                console.error('Error saving to Supabase:', error);
+                console.error('❌ Error saving to Supabase:', error);
+                alert('Eroare la salvarea profilului în baza de date: ' + error.message);
+            } else {
+                console.log('✅ User profile saved to Supabase:', data);
+            }
+        }
+    } catch (e) {
+        console.error('❌ Error saving user profile:', e);
+        alert('Eroare la salvarea profilului: ' + e.message);
+    }
+}
             } else {
                 console.log('✅ User profile saved to Supabase');
             }
