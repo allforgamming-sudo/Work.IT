@@ -271,7 +271,12 @@ function quickAddShift(startTime, endTime) {
 }
 
 async function saveShift() {
-    const dateStr = appState.selectedDate.toISOString().split('T')[0];
+    // Use local date to avoid timezone issues
+    const year = appState.selectedDate.getFullYear();
+    const month = String(appState.selectedDate.getMonth() + 1).padStart(2, '0');
+    const day = String(appState.selectedDate.getDate()).padStart(2, '0');
+    const dateStr = `${year}-${month}-${day}`;
+    
     const startTime = document.getElementById('startTime').value;
     const endTime = document.getElementById('endTime').value;
     
@@ -341,7 +346,12 @@ async function saveShift() {
 }
 
 async function deleteShift() {
-    const dateStr = appState.selectedDate.toISOString().split('T')[0];
+    // Use local date to avoid timezone issues
+    const year = appState.selectedDate.getFullYear();
+    const month = String(appState.selectedDate.getMonth() + 1).padStart(2, '0');
+    const day = String(appState.selectedDate.getDate()).padStart(2, '0');
+    const dateStr = `${year}-${month}-${day}`;
+    
     if (appState.shifts[dateStr]) {
         delete appState.shifts[dateStr];
         saveShifts();
