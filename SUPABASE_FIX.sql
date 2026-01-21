@@ -58,7 +58,8 @@ CREATE POLICY "Users can insert their own shifts"
 
 CREATE POLICY "Users can update their own shifts"
     ON shifts FOR UPDATE
-    USING (auth.uid() = user_id);
+    USING (auth.uid() = user_id)
+    WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "Users can delete their own shifts"
     ON shifts FOR DELETE
