@@ -813,6 +813,7 @@ function closeLoginModal() {
 async function saveUserProfile() {
     try {
         const userProfile = {
+            id: appState.user.id, // Use auth user ID
             name: appState.user.name,
             grade: appState.user.grade
         };
@@ -821,28 +822,16 @@ async function saveUserProfile() {
         localStorage.setItem('userProfile', JSON.stringify(userProfile));
         
         // Save to Supabase
-        if (typeof supabase !== 'undefined') {
-            if (appState.user.id) {
-                // Update existing user
-                const { error } = await supabase
-                    .from('users')
-                    .update(userProfile)
-                    .eq('id', appState.user.id);
-                
-                if (error) throw error;
-                console.log('User profile updated in Supabase');
+        if (typeof supabase !== 'undefined' && appState.user.id) {
+            // Upsert user profile (insert or update)
+            const { error } = await supabase
+                .from('users')
+                .upsert(userProfile, { onConflict: 'id' });
+            
+            if (error) {
+                console.error('Error saving to Supabase:', error);
             } else {
-                // Create new user
-                const { data, error } = await supabase
-                    .from('users')
-                    .insert([userProfile])
-                    .select()
-                    .single();
-                
-                if (error) throw error;
-                appState.user.id = data.id;
-                localStorage.setItem('userId', data.id);
-                console.log('User profile created in Supabase:', data.id);
+                console.log('✅ User profile saved to Supabase');
             }
         }
     } catch (e) {
@@ -853,23 +842,21 @@ async function saveUserProfile() {
 
 async function loadUserProfile() {
     try {
-        // Try to load user ID from localStorage
-        const savedUserId = localStorage.getItem('userId');
-        
-        // Try to load from Supabase first
-        if (typeof supabase !== 'undefined' && savedUserId) {
+        // Try to load from Supabase using the auth user ID
+        if (typeof supabase !== 'undefined' && appState.user.id) {
             const { data, error } = await supabase
                 .from('users')
                 .select('*')
-                .eq('id', savedUserId)
+                .eq('id', appState.user.id)
                 .single();
             
             if (data && !error) {
-                appState.user.id = data.id;
                 appState.user.name = data.name || '';
                 appState.user.grade = data.grade || 'Agent de politie';
-                console.log('User profile loaded from Supabase');
+                console.log('✅ User profile loaded from Supabase');
                 return;
+            } else if (error) {
+                console.log('No profile found, will create on save');
             }
         }
         
@@ -878,6 +865,13 @@ async function loadUserProfile() {
         if (saved) {
             const userProfile = JSON.parse(saved);
             appState.user.name = userProfile.name || '';
+            appState.user.grade = userProfile.grade || 'Agent de politie';
+            console.log('User profile loaded from localStorage');
+        }
+    } catch (e) {
+        console.error('Error loading user profile:', e);
+    }
+}
             appState.user.grade = userProfile.grade || 'Agent de politie';
             console.log('User profile loaded from localStorage');
         }
@@ -1124,7 +1118,7 @@ async function handleShiftDetailsSubmit(event) {
     
     // Update UI in real-time
     updateCalendar();
-    updateStats();
+    updateStatistics();
     updateShiftDisplay();
     updateIncidents();
     
