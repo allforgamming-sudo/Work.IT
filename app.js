@@ -981,6 +981,11 @@ async function clearAllData() {
 function openShiftDetailsModal() {
     const modal = document.getElementById('shiftDetailsModal');
     modal.classList.add('active');
+    
+    // Auto-focus first field for quick entry
+    setTimeout(() => {
+        document.getElementById('shiftDate').focus();
+    }, 100);
 }
 
 function closeShiftDetailsModal() {
